@@ -98,6 +98,7 @@ const SSH_KEY = "C:/Users/me/.ssh/id_ed25519";  // Your SSH key path
 
 ## Usage
 
+### Core
 | Tool | Description | Example |
 |------|-------------|---------|
 | `laptop_sync` | Copy project files to remote | `laptop_sync()` |
@@ -105,14 +106,38 @@ const SSH_KEY = "C:/Users/me/.ssh/id_ed25519";  // Your SSH key path
 | `laptop_exec` | Execute with extended timeout | `laptop_exec({ command: "bun run build", timeout: 120000 })` |
 | `laptop_dev` | Start dev server | `laptop_dev()` |
 | `laptop_stop` | Stop dev server | `laptop_stop()` |
+| `laptop_status` | Check server status | `laptop_status()` |
+
+### Visual
+| Tool | Description | Example |
+|------|-------------|---------|
 | `laptop_screenshot` | Take screenshot | `laptop_screenshot({ url: "http://localhost:5173" })` |
 | `laptop_browser` | Screenshot multiple pages | `laptop_browser({ url: "http://localhost:5173", pages: ["/", "/about"] })` |
 | `laptop_fetch` | Fetch page HTML | `laptop_fetch({ url: "http://localhost:5173" })` |
-| `laptop_status` | Check server status | `laptop_status()` |
+| `laptop_gallery` | Save and compare screenshots | `laptop_gallery({ action: "save", name: "homepage" })` |
+
+### DevOps
+| Tool | Description | Example |
+|------|-------------|---------|
 | `laptop_logs` | Tail dev server logs | `laptop_logs({ lines: 100 })` |
 | `laptop_tunnel` | SSH port forwarding | `laptop_tunnel({ localPort: 8080, remotePort: 3000 })` |
 | `laptop_perf` | Run Lighthouse audit | `laptop_perf({ url: "http://localhost:3000" })` |
 | `laptop_docker` | Docker compose operations | `laptop_docker({ action: "up", service: "web" })` |
+
+### Workflow
+| Tool | Description | Example |
+|------|-------------|---------|
+| `laptop_watch` | Auto-sync on file changes | `laptop_watch({ action: "start" })` |
+| `laptop_hosts` | Multi-host management | `laptop_hosts({ action: "list" })` |
+| `laptop_profile` | Dev server profiles | `laptop_profile({ action: "save", name: "web", port: 5173 })` |
+| `laptop_git` | Git operations on remote | `laptop_git({ action: "status" })` |
+
+### Quality of Life
+| Tool | Description | Example |
+|------|-------------|---------|
+| `laptop_health` | Check all tools installed | `laptop_health()` |
+| `laptop_setup` | Setup wizard for new machine | `laptop_setup({ host: "user@ip", keyPath: "/path/to/key" })` |
+| `laptop_recover` | Auto-restart crashed server | `laptop_recover({ action: "restart" })` |
 
 ## Customization
 

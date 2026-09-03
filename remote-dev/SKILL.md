@@ -21,6 +21,7 @@ Local (Windows)                   Remote (Linux)
 
 ## Available Tools
 
+### Core
 | Tool | Description | Usage |
 |------|-------------|-------|
 | `laptop_sync` | Copy project files to remote | Run after editing files locally |
@@ -28,14 +29,38 @@ Local (Windows)                   Remote (Linux)
 | `laptop_exec` | Execute command with extended timeout | `{ command: "bun run build", timeout: 120000 }` |
 | `laptop_dev` | Start dev server on remote | No args needed |
 | `laptop_stop` | Stop dev server | No args needed |
+| `laptop_status` | Check server status | No args needed |
+
+### Visual
+| Tool | Description | Usage |
+|------|-------------|-------|
 | `laptop_screenshot` | Take screenshot of running app | `{ url: "http://localhost:5173" }` |
 | `laptop_browser` | Take screenshots of multiple pages | `{ url: "http://localhost:5173", pages: ["/", "/about"] }` |
 | `laptop_fetch` | Fetch webpage HTML | `{ url: "http://localhost:5173" }` |
-| `laptop_status` | Check server status | No args needed |
+| `laptop_gallery` | Save and compare screenshots | `{ action: "save", name: "homepage" }` |
+
+### DevOps
+| Tool | Description | Usage |
+|------|-------------|-------|
 | `laptop_logs` | Tail dev server logs | `{ lines: 100 }` |
 | `laptop_tunnel` | SSH port forwarding | `{ localPort: 8080, remotePort: 3000 }` |
 | `laptop_perf` | Run Lighthouse audit | `{ url: "http://localhost:3000" }` |
 | `laptop_docker` | Docker compose operations | `{ action: "up", service: "web" }` |
+
+### Workflow
+| Tool | Description | Usage |
+|------|-------------|-------|
+| `laptop_watch` | Auto-sync on file changes | `{ action: "start" }` |
+| `laptop_hosts` | Multi-host management | `{ action: "list" }` |
+| `laptop_profile` | Dev server profiles | `{ action: "save", name: "web", port: 5173 }` |
+| `laptop_git` | Git operations on remote | `{ action: "status" }` |
+
+### Quality of Life
+| Tool | Description | Usage |
+|------|-------------|-------|
+| `laptop_health` | Check all tools installed | No args needed |
+| `laptop_setup` | Setup wizard for new machine | `{ host: "user@ip", keyPath: "/path/to/key" }` |
+| `laptop_recover` | Auto-restart crashed server | `{ action: "restart" }` |
 
 ## Workflow
 
