@@ -102,11 +102,17 @@ const SSH_KEY = "C:/Users/me/.ssh/id_ed25519";  // Your SSH key path
 |------|-------------|---------|
 | `laptop_sync` | Copy project files to remote | `laptop_sync()` |
 | `laptop_run` | Run a command on remote | `laptop_run({ command: "ls -la" })` |
+| `laptop_exec` | Execute with extended timeout | `laptop_exec({ command: "bun run build", timeout: 120000 })` |
 | `laptop_dev` | Start dev server | `laptop_dev()` |
 | `laptop_stop` | Stop dev server | `laptop_stop()` |
 | `laptop_screenshot` | Take screenshot | `laptop_screenshot({ url: "http://localhost:5173" })` |
+| `laptop_browser` | Screenshot multiple pages | `laptop_browser({ url: "http://localhost:5173", pages: ["/", "/about"] })` |
 | `laptop_fetch` | Fetch page HTML | `laptop_fetch({ url: "http://localhost:5173" })` |
 | `laptop_status` | Check server status | `laptop_status()` |
+| `laptop_logs` | Tail dev server logs | `laptop_logs({ lines: 100 })` |
+| `laptop_tunnel` | SSH port forwarding | `laptop_tunnel({ localPort: 8080, remotePort: 3000 })` |
+| `laptop_perf` | Run Lighthouse audit | `laptop_perf({ url: "http://localhost:3000" })` |
+| `laptop_docker` | Docker compose operations | `laptop_docker({ action: "up", service: "web" })` |
 
 ## Customization
 

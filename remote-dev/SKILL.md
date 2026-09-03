@@ -25,11 +25,17 @@ Local (Windows)                   Remote (Linux)
 |------|-------------|-------|
 | `laptop_sync` | Copy project files to remote | Run after editing files locally |
 | `laptop_run` | Execute any command on the remote | `{ command: "ls -la" }` |
+| `laptop_exec` | Execute command with extended timeout | `{ command: "bun run build", timeout: 120000 }` |
 | `laptop_dev` | Start dev server on remote | No args needed |
 | `laptop_stop` | Stop dev server | No args needed |
 | `laptop_screenshot` | Take screenshot of running app | `{ url: "http://localhost:5173" }` |
+| `laptop_browser` | Take screenshots of multiple pages | `{ url: "http://localhost:5173", pages: ["/", "/about"] }` |
 | `laptop_fetch` | Fetch webpage HTML | `{ url: "http://localhost:5173" }` |
 | `laptop_status` | Check server status | No args needed |
+| `laptop_logs` | Tail dev server logs | `{ lines: 100 }` |
+| `laptop_tunnel` | SSH port forwarding | `{ localPort: 8080, remotePort: 3000 }` |
+| `laptop_perf` | Run Lighthouse audit | `{ url: "http://localhost:3000" }` |
+| `laptop_docker` | Docker compose operations | `{ action: "up", service: "web" }` |
 
 ## Workflow
 
@@ -91,6 +97,47 @@ ssh user@remote 'export PATH="$HOME/.bun/bin:$PATH" && cd ~/screenshot-tool && b
 scp user@remote:/tmp/screenshot.png ./screenshot.png
 ```
 
+## Additional Usage
+
+### View Logs
+```bash
+# Via tool
+laptop_logs: { lines: 100 }
+```
+
+### SSH Tunnel
+```bash
+# Access remote port 3000 locally as port 8080
+laptop_tunnel: { localPort: 8080, remotePort: 3000 }
+```
+
+### Multi-page Screenshots
+```bash
+# Screenshot multiple pages at once
+laptop_browser: { url: "http://localhost:5173", pages: ["/", "/about", "/contact"] }
+```
+
+### Performance Audit
+```bash
+# Run Lighthouse
+laptop_perf: { url: "http://localhost:3000" }
+```
+
+### Docker Operations
+```bash
+# Start containers
+laptop_docker: { action: "up" }
+
+# Start specific service
+laptop_docker: { action: "up", service: "web" }
+
+# Check status
+laptop_docker: { action: "status" }
+
+# View logs
+laptop_docker: { action: "logs", service: "api" }
+```
+
 ## Troubleshooting
 
 ### Dev server returns 404
@@ -110,3 +157,11 @@ scp user@remote:/tmp/screenshot.png ./screenshot.png
 ### Sync fails
 - Ensure remote directory exists
 - Check SSH permissions on the remote machine
+
+### Lighthouse fails
+- Ensure Chrome is installed on remote: `which google-chrome`
+- May need to install: `apt install google-chrome-stable`
+
+### Docker errors
+- Ensure Docker is installed and running on remote
+- Check user permissions: `docker ps` should work without sudo

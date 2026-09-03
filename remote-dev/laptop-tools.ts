@@ -147,6 +147,202 @@ export const LaptopTools = async (ctx: any) => {
           }
         },
       },
+
+      laptop_logs: {
+        description:
+          "Tail the dev server logs on the remote machine. Example: { lines: 100 }",
+        execute: async ({ lines = 50 }: { lines?: number }) => {
+          try {
+            const output = ssh(
+              `tail -${lines} /tmp/dev-server.log 2>/dev/null || echo "No logs found"`
+            );
+            return output;
+          } catch (e: any) {
+            return `Failed to fetch logs: ${e.message}`;
+          }
+        },
+      },
+
+      laptop_tunnel: {
+        description:
+          "Create SSH tunnel to access a remote port locally. Example: { localPort: 8080, remotePort: 3000 }",
+        execute: async ({
+          localPort,
+          remotePort,
+        }: {
+          localPort: number;
+          remotePort: number;
+        }) => {
+          try {
+            const { spawn } = require("child_process");
+            const tunnel = spawn(
+              "ssh",
+              [
+                ...SSH_OPTS.split(" "),
+                "-L",
+                `${localPort}:localhost:${remotePort}`,
+                REMOTE_HOST,
+                "-N",
+              ],
+              { detached: true, stdio: "ignore" }
+            );
+            tunnel.unref();
+            return `Tunnel active: localhost:${localPort} → remote:${remotePort} (PID: ${tunnel.pid})`;
+          } catch (e: any) {
+            return `Tunnel failed: ${e.message}`;
+          }
+        },
+      },
+
+      laptop_exec: {
+        description:
+          "Execute a command on the remote machine with extended timeout and full output. Example: { command: 'bun run build', timeout: 120000 }",
+        execute: async ({
+          command,
+          timeout = 60000,
+        }: {
+          command: string;
+          timeout?: number;
+        }) => {
+          try {
+            const output = execSync(
+              `ssh ${SSH_OPTS} ${REMOTE_HOST} "export NVM_DIR=\\$HOME/.nvm && [ -s \\\"\\$NVM_DIR/nvm.sh\\\" ] && . \\\"\\$NVM_DIR/nvm.sh\\\" && export PATH=\\\"\\$HOME/.bun/bin:\\$PATH\\\" && ${command}"`,
+              { encoding: "utf-8", timeout }
+            );
+            return output;
+          } catch (e: any) {
+            return `Command failed: ${e.stderr || e.message}`;
+          }
+        },
+      },
+
+      laptop_browser: {
+        description:
+          "Take screenshots of multiple pages on the remote machine. Example: { url: 'http://localhost:5173', pages: ['/', '/about', '/contact'] }",
+        execute: async ({
+          url,
+          pages,
+        }: {
+          url: string;
+          pages: string[];
+        }) => {
+          try {
+            const timestamp = Date.now();
+            const script = `
+              import puppeteer from "puppeteer";
+              const browser = await puppeteer.launch({
+                headless: true,
+                args: ["--no-sandbox", "--disable-setuid-sandbox"],
+              });
+              const page = await browser.newPage();
+              await page.setViewport({ width: 1920, height: 1080 });
+              const results = [];
+              for (const p of ${JSON.stringify(pages)}) {
+                const fullUrl = p.startsWith("http") ? p : "${url}" + p;
+                await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+                const name = p.replace(/[^a-zA-Z0-9]/g, "_") || "index";
+                const path = "/tmp/page-" + name + "-${timestamp}.png";
+                await page.screenshot({ path, fullPage: false });
+                results.push({ page: p, path });
+              }
+              await browser.close();
+              console.log(JSON.stringify(results));
+            `;
+            const remoteScript = `/tmp/browser-script-${timestamp}.mjs`;
+            execSync(
+              `ssh ${SSH_OPTS} ${REMOTE_HOST} "cat > ${remoteScript}"`,
+              { input: script, encoding: "utf-8" }
+            );
+            const output = ssh(
+              `export PATH="$HOME/.bun/bin:$PATH" && cd ~/screenshot-tool && bun run ${remoteScript}`
+            );
+            const results = JSON.parse(output.trim());
+            const localPaths: string[] = [];
+            for (const r of results) {
+              const localPath = `./${r.path.split("/").pop()}`;
+              scp(r.path, localPath);
+              localPaths.push(localPath);
+            }
+            return `Screenshots saved: ${localPaths.join(", ")}`;
+          } catch (e: any) {
+            return `Browser screenshots failed: ${e.message}`;
+          }
+        },
+      },
+
+      laptop_perf: {
+        description:
+          "Run Lighthouse performance audit on a URL. Example: { url: 'http://localhost:3000' }",
+        execute: async ({ url }: { url: string }) => {
+          try {
+            ssh(
+              `export PATH="$HOME/.bun/bin:$PATH" && which lighthouse >/dev/null 2>&1 || npm install -g lighthouse`
+            );
+            const timestamp = Date.now();
+            const reportPath = `/tmp/lighthouse-${timestamp}.json`;
+            ssh(
+              `lighthouse ${url} --output=json --output-path=${reportPath} --chrome-flags="--headless --no-sandbox" --quiet 2>/dev/null`
+            );
+            const localPath = `./lighthouse-${timestamp}.json`;
+            scp(reportPath, localPath);
+
+            const report = JSON.parse(
+              require("fs").readFileSync(localPath, "utf-8")
+            );
+            const scores = {
+              performance: Math.round(
+                report.categories.performance.score * 100
+              ),
+              accessibility: Math.round(
+                report.categories.accessibility.score * 100
+              ),
+              "best-practices": Math.round(
+                report.categories["best-practices"].score * 100
+              ),
+              seo: Math.round(report.categories.seo.score * 100),
+            };
+            return `Lighthouse scores:\n${JSON.stringify(scores, null, 2)}\nFull report: ${localPath}`;
+          } catch (e: any) {
+            return `Lighthouse failed: ${e.message}`;
+          }
+        },
+      },
+
+      laptop_docker: {
+        description:
+          "Docker compose operations on the remote machine. Example: { action: 'up', service: 'web' }",
+        execute: async ({
+          action,
+          service,
+        }: {
+          action: "up" | "down" | "status" | "logs";
+          service?: string;
+        }) => {
+          try {
+            let cmd = "";
+            switch (action) {
+              case "up":
+                cmd = `cd ${REMOTE_DIR} && docker compose up -d ${service || ""}`;
+                break;
+              case "down":
+                cmd = `cd ${REMOTE_DIR} && docker compose down ${service || ""}`;
+                break;
+              case "status":
+                cmd = `cd ${REMOTE_DIR} && docker compose ps`;
+                break;
+              case "logs":
+                cmd = `cd ${REMOTE_DIR} && docker compose logs ${service || ""} --tail=50`;
+                break;
+              default:
+                return `Unknown action: ${action}`;
+            }
+            const output = ssh(cmd);
+            return output;
+          } catch (e: any) {
+            return `Docker command failed: ${e.message}`;
+          }
+        },
+      },
     },
   };
 };
